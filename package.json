@@ -5,7 +5,7 @@
   "description": "\"a practice project to imrovise my backend\"",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon -r dotenv/config src/index.js"
   },
   "author": "",
   "license": "ISC",
