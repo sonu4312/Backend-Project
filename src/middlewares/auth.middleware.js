@@ -3,7 +3,6 @@ import { apierrors } from "../utils/apierrors.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
 
-//kal kroonga
 export const verifyToken = asyncHandler(async (req, res, next) => {
   try {
     const token =
