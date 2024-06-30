@@ -40,5 +40,5 @@ router
 
 router.route("/channel/:username").get(verifyToken, userChannelProfile);
 
-router.get("/history").get(verifyToken, getWatchHistory);
+router.route("/history").get(verifyToken, getWatchHistory);
 export default router;

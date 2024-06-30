@@ -102,7 +102,7 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new apierrors(404, "User does not exist");
   }
 
-  const passwordCheck = user.isPasswordCorrect(password);
+  const passwordCheck = await user.isPasswordCorrect(password);
   if (!passwordCheck) {
     throw new apierrors(401, "Invalid Credentials");
   }
@@ -137,7 +137,7 @@ const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: { refreshToken: undefined },
+      $unset: { refreshToken: 1 },
     },
     {
       new: true,
@@ -240,7 +240,7 @@ const updateAccDetails = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(apiresponse(200, user, "User details updated successfully"));
+    .json(new apiresponse(200, user, "User details updated successfully"));
 });
 
 const updateAvatar = asyncHandler(async (req, res) => {
@@ -398,7 +398,9 @@ const getWatchHistory = asyncHandler(async (req, res) => {
           },
           {
             $addFields: {
-              $first: "$videoOwner",
+              videoOwner: {
+                $arrayElemAt: ["$videoOwner", 0],
+              },
             },
           },
         ],
