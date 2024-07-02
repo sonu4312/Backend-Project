@@ -1,10 +1,14 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { apierrors } from "../utils/apierrors.js";
 import { User } from "../models/user.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import {
+  deleteFromCloudinary,
+  uploadOnCloudinary,
+} from "../utils/cloudinary.js";
 import { apiresponse } from "../utils/apiresponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import { extractPublicId } from "../utils/extractPublicId.js";
 
 const genrateAccessRefreshToken = async (userId) => {
   try {
@@ -161,7 +165,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     throw new apierrors(400, "Unauthorizes request");
   }
   try {
-    const decodedToken = await jwt.verify(
+    const decodedToken = jwt.verify(
       incomingRefToken,
       process.env.REFRESH_TOKEN_SECRET
     );
@@ -172,10 +176,12 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 
     if (incomingRefToken !== user?.refreshToken) {
-      throw new apierrors(400, "Refresh Token in expired or used");
+      throw new apierrors(400, "Refresh Token is expired or used");
     }
 
-    const { newAccessToken, newRefToken } = genrateAccessRefreshToken(user._id);
+    const { accessToken: newAccessToken, refreshToken: newRefToken } =
+      await genrateAccessRefreshToken(user._id);
+
     const options = {
       httpOnly: true,
       secure: true,
@@ -249,12 +255,19 @@ const updateAvatar = asyncHandler(async (req, res) => {
     throw new apierrors(401, "Avatar file is missing");
   }
 
+  const user = await User.findById(req.user._id);
+
+  if (user.avatar) {
+    const publicId = extractPublicId(user.avatar);
+    await deleteFromCloudinary(publicId, "image");
+  }
+
   const uploadAvatar = await uploadOnCloudinary(avatarImgPath);
   if (!uploadAvatar.url) {
     throw new apierrors(401, "Error while uploading");
   }
 
-  const user = await User.findByIdAndUpdate(
+  const updatedUser = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
@@ -266,7 +279,7 @@ const updateAvatar = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(new apiresponse(200, user, "Avatar updated successfully"));
+    .json(new apiresponse(200, updatedUser, "Avatar updated successfully"));
 });
 const updateCoverImg = asyncHandler(async (req, res) => {
   const coverImgPath = req.file.path;
@@ -274,12 +287,19 @@ const updateCoverImg = asyncHandler(async (req, res) => {
     throw new apierrors(401, "Cover Image file is missing");
   }
 
+  const user = await User.findById(req.user._id);
+
+  if (user.coverImg) {
+    const publicId = extractPublicId(user.coverImg);
+    await deleteFromCloudinary(publicId, "image");
+  }
+
   const uploadcoverImg = await uploadOnCloudinary(coverImgPath);
   if (!uploadcoverImg.url) {
     throw new apierrors(401, "Error while uploading");
   }
 
-  const user = await User.findByIdAndUpdate(
+  const updatedUser = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
@@ -291,7 +311,9 @@ const updateCoverImg = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new apiresponse(200, user, "Cover Image updated successfully"));
+    .json(
+      new apiresponse(200, updatedUser, "Cover Image updated successfully")
+    );
 });
 
 const userChannelProfile = asyncHandler(async (req, res) => {

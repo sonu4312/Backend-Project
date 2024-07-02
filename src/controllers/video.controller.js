@@ -1,6 +1,6 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { apierrors } from "../utils/apierrors.js";
-import { uploadOnCloudinary } from "../utils/cloudinary";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Video } from "../models/video.model.js";
 import { apiresponse } from "../utils/apiresponse.js";
 
