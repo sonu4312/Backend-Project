@@ -15,7 +15,7 @@ const publishVideo = asyncHandler(async (req, res) => {
     throw new apierrors(400, "Video file is required");
   }
   try {
-    const uploadVideo = await uploadOnCloudinary(videoFile);
+    const uploadVideo = await uploadOnCloudinary(videoFile.path);
 
     if (!uploadVideo || !uploadVideo.url) {
       throw new apierrors(500, "Failed to upload video");
@@ -33,14 +33,13 @@ const publishVideo = asyncHandler(async (req, res) => {
     });
 
     const createdVideo = await newVideo.save();
-
     return res
       .status(200)
       .json(
         new apiresponse(200, createdVideo, "Video published successffully")
       );
   } catch (error) {
-    throw new Error(400, error.message || "Error while publishing video");
+    throw new apierrors(400, error.message || "Error while publishing video");
   }
 });
 
