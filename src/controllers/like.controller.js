@@ -74,10 +74,10 @@ export const toggleTweetLike = asyncHandler(async (req, res) => {
     tweet: id,
     likedBy: req.user?._id,
   });
-  if (likedBy) {
+  if (likedTweet) {
     await Like.findByIdAndDelete(likedTweet?._id);
 
-    return res.status(201).json(new apiresponse(201, null, "Tweet Unliked"));
+    return res.status(200).json(new apiresponse(200, null, "Tweet Unliked"));
   }
 
   const newLike = await Like.create({
@@ -86,6 +86,6 @@ export const toggleTweetLike = asyncHandler(async (req, res) => {
   });
 
   return res
-    .status()
-    .json(new apiresponse(201, { LikedTweet: newLike }, "Tweet Liked"));
+    .status(200)
+    .json(new apiresponse(200, { LikedTweet: newLike }, "Tweet Liked"));
 });
