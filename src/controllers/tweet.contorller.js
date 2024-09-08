@@ -146,11 +146,46 @@ const getUserTweets = asyncHandler(async (req, res) => {
         likesCount: 1,
         isLiked: 1,
         createdAt: 1,
+        likeDetails: 1,
       },
     },
   ]);
   return res
     .status(200)
     .json(new apiresponse(200, tweet, "Tweets fetched successfully"));
+});
+
+const getAllTweets = asyncHandler(async (req, res) => {
+  const tweets = await Tweet.aggregate([
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "ownerDetails",
+        pipeline: [
+          {
+            $project: {
+              username: 1,
+              avatar: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "tweet",
+        as: "likeDetails",
+        pipeline: [{}],
+      },
+    },
+  ]);
+
+  return res
+    .status(200)
+    .json(new apiresponse(200, tweets, "All tweets fetched sucessfully"));
 });
 export { createTweet, updateTweet, deleteTweet, getUserTweets };
