@@ -179,7 +179,45 @@ const getAllTweets = asyncHandler(async (req, res) => {
         localField: "_id",
         foreignField: "tweet",
         as: "likeDetails",
-        pipeline: [{}],
+        pipeline: [
+          {
+            $project: {
+              likedBy: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        likeCount: {
+          $size: "$likeDetails",
+        },
+        ownerDetails: {
+          $first: "$ownerDetails",
+        },
+        isLiked: {
+          $cond: {
+            if: { $in: [req.user?._id, "$likeDetails.likedBy"] },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    {
+      $sort: {
+        createdAt: -1,
+      },
+    },
+    {
+      $project: {
+        content: 1,
+        createdAt: 1,
+        ownerDetails: 1,
+        likeCount: 1,
+        isLiked: 1,
+        likeDetails: 1,
       },
     },
   ]);
@@ -188,4 +226,4 @@ const getAllTweets = asyncHandler(async (req, res) => {
     .status(200)
     .json(new apiresponse(200, tweets, "All tweets fetched sucessfully"));
 });
-export { createTweet, updateTweet, deleteTweet, getUserTweets };
+export { createTweet, updateTweet, deleteTweet, getUserTweets, getAllTweets };
