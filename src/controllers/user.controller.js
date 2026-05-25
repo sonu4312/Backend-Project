@@ -9,6 +9,8 @@ import { apiresponse } from "../utils/apiresponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { extractPublicId } from "../utils/extractPublicId.js";
+import crypto from "crypto";
+import { PasswordReset } from "../models/password.reset.modal.js";
 
 const genrateAccessRefreshToken = async (userId) => {
   try {
@@ -22,7 +24,7 @@ const genrateAccessRefreshToken = async (userId) => {
   } catch (error) {
     throw new apierrors(
       500,
-      "Something went wrong while generating refresh and genrate token"
+      "Something went wrong while generating refresh and genrate token",
     );
   }
 };
@@ -151,7 +153,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   // Retrieve the newly created user
   const createdUser = await User.findById(user._id).select(
-    "-password -refreshToken"
+    "-password -refreshToken",
   );
   if (!createdUser) {
     throw new apierrors(500, "Server problem while registering the user");
@@ -161,6 +163,50 @@ const registerUser = asyncHandler(async (req, res) => {
   res
     .status(201)
     .json(new apiresponse(200, createdUser, "User registered successfully"));
+});
+
+//Forgot password Controller
+
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  // 1. Validate email
+  if (!email || !email.trim()) {
+    throw new apierrors(400, "Email is required");
+  }
+
+  // 2. Find User
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    res
+      .status(200)
+      .json(new apiresponse(200, {}, "If email exists, reset link sent"));
+  }
+
+  // 3. generate raw token
+  const token = crypto.randomBytes(20).toString("hex");
+  // 4. generate raw token
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const loggger = {
+    token,
+    tokenHash,
+    userId: user._id,
+  };
+  // 5. expiry in 15 min
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+  // 6. save in db
+
+  await PasswordReset.create({
+    userId: user._id,
+    tokenHash,
+    expiredAt: expiresAt,
+  })
+
+  res.status(200).json(new apiresponse(200, loggger, "logges created"));
+  console.log("dssdsd", token, "hassh----->", tokenHash);
+  // 7. create reset link
+  // res.status(200).json(new apiresponse(200,user, "Email sent successfully"))
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -184,11 +230,11 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   const { refreshToken, accessToken } = await genrateAccessRefreshToken(
-    user._id
+    user._id,
   );
 
   const loggedInUser = await User.findById(user._id).select(
-    "-password -refreshToken"
+    "-password -refreshToken",
   );
 
   const options = {
@@ -204,8 +250,8 @@ const loginUser = asyncHandler(async (req, res) => {
       new apiresponse(
         200,
         { user: loggedInUser, accessToken, refreshToken },
-        "User logged in successfully"
-      )
+        "User logged in successfully",
+      ),
     );
 });
 
@@ -217,7 +263,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     },
     {
       new: true,
-    }
+    },
   );
   const options = {
     httpOnly: true,
@@ -239,7 +285,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   try {
     const decodedToken = jwt.verify(
       incomingRefToken,
-      process.env.REFRESH_TOKEN_SECRET
+      process.env.REFRESH_TOKEN_SECRET,
     );
 
     const user = await User.findById(decodedToken?._id);
@@ -270,8 +316,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             accessToken: newAccessToken,
             refreshToken: newRefToken,
           },
-          "Access token refreshed"
-        )
+          "Access token refreshed",
+        ),
       );
   } catch (error) {
     throw new apierrors(400, error?.messsage || "Invalid RefreshToken");
@@ -313,7 +359,7 @@ const updateAccDetails = asyncHandler(async (req, res) => {
         email,
       },
     },
-    { new: true }
+    { new: true },
   ).select("-password");
 
   return res
@@ -346,7 +392,7 @@ const updateAvatar = asyncHandler(async (req, res) => {
         avatar: uploadAvatar.url,
       },
     },
-    { new: true }
+    { new: true },
   ).select("-password");
 
   res
@@ -378,13 +424,13 @@ const updateCoverImg = asyncHandler(async (req, res) => {
         coverImg: uploadcoverImg.url,
       },
     },
-    { new: true }
+    { new: true },
   ).select("-password");
 
   return res
     .status(200)
     .json(
-      new apiresponse(200, updatedUser, "Cover Image updated successfully")
+      new apiresponse(200, updatedUser, "Cover Image updated successfully"),
     );
 });
 
@@ -454,8 +500,8 @@ const userChannelProfile = asyncHandler(async (req, res) => {
       new apiresponse(
         200,
         channelInfo[0],
-        "User Channel info fetched successfully"
-      )
+        "User Channel info fetched successfully",
+      ),
     );
 });
 
@@ -508,8 +554,8 @@ const getWatchHistory = asyncHandler(async (req, res) => {
       new apiresponse(
         200,
         user[0].watchHistory,
-        "watchHistory fetched succesfully"
-      )
+        "watchHistory fetched succesfully",
+      ),
     );
 });
 export {
@@ -524,4 +570,5 @@ export {
   updateCoverImg,
   userChannelProfile,
   getWatchHistory,
+  forgotPassword,
 };
