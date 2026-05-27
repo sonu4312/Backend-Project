@@ -11,7 +11,6 @@ import {
   updateAvatar,
   updateCoverImg,
   userChannelProfile,
-  forgotPassword,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyToken } from "../middlewares/auth.middleware.js";
@@ -26,8 +25,6 @@ router.route("/register").post(
   registerUser,
 );
 
-// forgot password
-router.route("/forgot-password").post(forgotPassword);
 router.route("/login").post(loginUser);
 router.route("/logout").post(verifyToken, logoutUser);
 router.route("/refresh-token").post(refreshAccessToken);

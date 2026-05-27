@@ -10,7 +10,6 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { extractPublicId } from "../utils/extractPublicId.js";
 import crypto from "crypto";
-import { PasswordReset } from "../models/password.reset.modal.js";
 
 const genrateAccessRefreshToken = async (userId) => {
   try {
@@ -163,50 +162,6 @@ const registerUser = asyncHandler(async (req, res) => {
   res
     .status(201)
     .json(new apiresponse(200, createdUser, "User registered successfully"));
-});
-
-//Forgot password Controller
-
-const forgotPassword = asyncHandler(async (req, res) => {
-  const { email } = req.body;
-
-  // 1. Validate email
-  if (!email || !email.trim()) {
-    throw new apierrors(400, "Email is required");
-  }
-
-  // 2. Find User
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    res
-      .status(200)
-      .json(new apiresponse(200, {}, "If email exists, reset link sent"));
-  }
-
-  // 3. generate raw token
-  const token = crypto.randomBytes(20).toString("hex");
-  // 4. generate raw token
-  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-  const loggger = {
-    token,
-    tokenHash,
-    userId: user._id,
-  };
-  // 5. expiry in 15 min
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
-  // 6. save in db
-
-  await PasswordReset.create({
-    userId: user._id,
-    tokenHash,
-    expiredAt: expiresAt,
-  })
-
-  res.status(200).json(new apiresponse(200, loggger, "logges created"));
-  console.log("dssdsd", token, "hassh----->", tokenHash);
-  // 7. create reset link
-  // res.status(200).json(new apiresponse(200,user, "Email sent successfully"))
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -570,5 +525,4 @@ export {
   updateCoverImg,
   userChannelProfile,
   getWatchHistory,
-  forgotPassword,
 };

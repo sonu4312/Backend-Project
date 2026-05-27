@@ -25,7 +25,7 @@ const passwordResetSchema = new Schema(
 
 // 👇 THIS CREATES TTL INDEX
 passwordResetSchema.index(
-  { expiresAt: 1 },
+  { expiredAt: 1 },
   { expireAfterSeconds: 0 }
 );
 

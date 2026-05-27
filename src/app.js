@@ -25,7 +25,9 @@ import likeRoutes from "./routes/like.routes.js";
 import commentRoutes from "./routes/comment.routes.js";
 import tweetRoutes from "./routes/tweet.routes.js";
 import subscriptionRoutes from "./routes/subscription.routes.js";
+import authRouter from "./routes/auth.routes.js";
 
+app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/video", videoRoutes);
 app.use("/api/v1/like", likeRoutes);
